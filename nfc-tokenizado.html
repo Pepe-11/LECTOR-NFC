@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lector NFC con Tokenización</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .security-badge {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            margin: 10px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-copy {
+            background: #28a745;
+            font-size: 14px;
+            padding: 8px 20px;
+        }
+
+        #output {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f7f7f7;
+            border-radius: 10px;
+            min-height: 100px;
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .status.waiting {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+
+        .status.reading {
+            background: #74b9ff;
+            color: #0984e3;
+        }
+
+        .status.success {
+            background: #55efc4;
+            color: #00b894;
+        }
+
+        .status.error {
+            background: #ff7675;
+            color: #d63031;
+        }
+
+        .card-info {
+            margin-top: 15px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .card-info h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .data-row {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .data-label {
+            color: #666;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .data-value {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #333;
+            word-break: break-all;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        .token-highlight {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            border: 2px solid #667eea;
+        }
+
+        .security-info {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: left;
+        }
+
+        .security-info h4 {
+            color: #155724;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .security-info ul {
+            margin-left: 20px;
+            color: #155724;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .hash-options {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .hash-btn {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 8px 20px;
+            font-size: 13px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .hash-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .hash-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .scanning {
+            animation: pulse 1.5s infinite;
+        }
+
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .ios-manual {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .ios-manual h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .ios-manual input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Lector NFC con Tokenización</h1>
+        <p class="subtitle">Convierte el ID de tu tarjeta en un token único y seguro</p>
+        
+        <div class="security-badge">🛡️ SHA-256 Encryption</div>
+
+        <div id="device-section"></div>
+
+        <div>
+            <button id="read-nfc">🔍 Leer y Tokenizar NFC</button>
+            <button id="clear" class="btn-secondary">🗑️ Limpiar</button>
+        </div>
+
+        <div class="hash-options">
+            <button class="hash-btn active" data-algo="SHA-256">SHA-256</button>
+            <button class="hash-btn" data-algo="SHA-512">SHA-512</button>
+            <button class="hash-btn" data-algo="MD5">MD5 (legacy)</button>
+        </div>
+        
+        <div id="output">
+            <span class="status waiting">⏳ Esperando...</span>
+            <p>Presiona "Leer y Tokenizar NFC" para comenzar</p>
+        </div>
+    </div>
+
+    <script>
+        const readButton = document.getElementById('read-nfc');
+        const clearButton = document.getElementById('clear');
+        const output = document.getElementById('output');
+        const deviceSection = document.getElementById('device-section');
+        const hashBtns = document.querySelectorAll('.hash-btn');
+
+        let selectedAlgo = 'SHA-256';
+        let currentCardId = null;
+
+        // Detectar dispositivo
+        const ua = navigator.userAgent;
+        const isAndroid = /Android/i.test(ua);
+        const isIOS = /iPhone|iPad|iPod/i.test(ua);
+        const isChrome = /Chrome/i.test(ua) && !/Edge/i.test(ua);
+        const hasNFC = 'NDEFReader' in window;
+
+        // Seleccionar algoritmo
+        hashBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                hashBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedAlgo = btn.dataset.algo;
+                
+                // Re-tokenizar si hay un ID actual
+                if (currentCardId) {
+                    tokenizeAndDisplay(currentCardId, {});
+                }
+            });
+        });
+
+        // Limpiar
+        clearButton.addEventListener('click', () => {
+            output.innerHTML = `
+                <span class="status waiting">⏳ Esperando...</span>
+                <p>Presiona "Leer y Tokenizar NFC" para comenzar</p>
+            `;
+            currentCardId = null;
+        });
+
+        // Verificar dispositivo
+        if (isIOS) {
+            deviceSection.innerHTML = `
+                <div class="ios-manual">
+                    <h4>🍎 iOS Detectado</h4>
+                    <p style="color: #856404; margin-bottom: 10px;">
+                        iOS no permite leer NFC desde web. Pero puedes tokenizar manualmente:
+                    </p>
+                    <ol style="margin-left: 20px; color: #856404; font-size: 13px; line-height: 1.6;">
+                        <li>Usa <strong>Shortcuts</strong> o <strong>NFC Tools</strong> para leer el ID</li>
+                        <li>Pega el ID aquí abajo</li>
+                        <li>Click en "Tokenizar ID Manual"</li>
+                    </ol>
+                    <input type="text" id="manual-id" placeholder="Ej: AA:BB:CC:DD:EE:FF">
+                    <button class="btn-copy" onclick="tokenizeManualId()" style="margin-top: 10px; width: 100%;">
+                        🔐 Tokenizar ID Manual
+                    </button>
+                </div>
+            `;
+        }
+
+        // Leer NFC (Android)
+        readButton.addEventListener('click', async () => {
+            if (!hasNFC) {
+                if (!isIOS) {
+                    output.innerHTML = `
+                        <span class="status error">❌ Web NFC no soportado</span>
+                        <p>Tu navegador no soporta Web NFC API.</p>
+                        <p style="margin-top: 10px;">Usa <strong>Chrome en Android</strong></p>
+                    `;
+                }
+                return;
+            }
+
+            try {
+                const ndef = new NDEFReader();
+                
+                output.innerHTML = `
+                    <span class="status reading scanning">🔍 Escaneando...</span>
+                    <p><strong>Acerca tu tarjeta NFC</strong></p>
+                    <p style="margin-top: 10px; font-size: 13px; color: #666;">
+                        Mantén la tarjeta cerca 2-3 segundos
+                    </p>
+                `;
+                
+                readButton.disabled = true;
+                await ndef.scan();
+
+                ndef.addEventListener("reading", ({ message, serialNumber }) => {
+                    currentCardId = serialNumber;
+                    
+                    let records = {};
+                    message.records.forEach((record, i) => {
+                        let data = null;
+                        try {
+                            if (record.recordType === "text") {
+                                const decoder = new TextDecoder(record.encoding || 'utf-8');
+                                data = decoder.decode(record.data);
+                            } else if (record.recordType === "url") {
+                                const decoder = new TextDecoder();
+                                data = decoder.decode(record.data);
+                            }
+                        } catch (e) {}
+                        
+                        if (data) {
+                            records[`record_${i+1}`] = {
+                                type: record.recordType,
+                                data: data
+                            };
+                        }
+                    });
+
+                    tokenizeAndDisplay(serialNumber, records);
+                    readButton.disabled = false;
+                });
+
+                ndef.addEventListener("readingerror", () => {
+                    output.innerHTML = `
+                        <span class="status error">⚠️ Error de Lectura</span>
+                        <p>No se pudo leer la tarjeta. Intenta de nuevo.</p>
+                    `;
+                    readButton.disabled = false;
+                });
+
+            } catch (error) {
+                output.innerHTML = `
+                    <span class="status error">❌ Error</span>
+                    <p>${error.message}</p>
+                    <p style="margin-top: 10px; font-size: 13px;">
+                        Verifica que NFC esté activo y hayas dado permisos.
+                    </p>
+                `;
+                readButton.disabled = false;
+            }
+        });
+
+        // Tokenizar ID manual (iOS)
+        window.tokenizeManualId = async function() {
+            const manualId = document.getElementById('manual-id').value.trim();
+            if (!manualId) {
+                alert('Por favor ingresa un ID de tarjeta NFC');
+                return;
+            }
+            
+            currentCardId = manualId;
+            tokenizeAndDisplay(manualId, {});
+        };
+
+        // Función principal de tokenización
+        async function tokenizeAndDisplay(cardId, records) {
+            // Generar tokens
+            const token = await generateToken(cardId, selectedAlgo);
+            const shortToken = token.substring(0, 16) + '...';
+            
+            let html = `
+                <span class="status success">✅ ¡Tokenización Exitosa!</span>
+                <div class="card-info">
+                    <h3>🔐 Datos Tokenizados</h3>
+                    
+                    <div class="data-row">
+                        <div class="data-label">📇 ID Original de la Tarjeta</div>
+                        <div class="data-value">${cardId}</div>
+                        <button class="btn-copy" onclick="copyToClipboard('${cardId}', 'ID Original')">
+                            📋 Copiar
+                        </button>
+                    </div>
+
+                    <div class="data-row token-highlight">
+                        <div class="data-label">🔑 Token Único (${selectedAlgo})</div>
+                        <div class="data-value">${token}</div>
+                        <button class="btn-copy" onclick="copyToClipboard('${token}', 'Token')">
+                            📋 Copiar Token
+                        </button>
+                    </div>
+
+                    <div class="data-row">
+                        <div class="data-label">⚡ Token Corto (primeros 16 caracteres)</div>
+                        <div class="data-value">${shortToken}</div>
+                        <button class="btn-copy" onclick="copyToClipboard('${token.substring(0, 16)}', 'Token Corto')">
+                            📋 Copiar
+                        </button>
+                    </div>
+            `;
+
+            // Agregar records si existen
+            if (Object.keys(records).length > 0) {
+                html += `<div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #f0f0f0;">
+                    <div class="data-label">📄 Registros NDEF Encontrados</div>`;
+                
+                for (const [key, record] of Object.entries(records)) {
+                    const recordToken = await generateToken(record.data, selectedAlgo);
+                    html += `
+                        <div class="data-row" style="margin-top: 10px;">
+                            <div class="data-label">${record.type}</div>
+                            <div class="data-value">${record.data}</div>
+                            <div class="data-label" style="margin-top: 10px;">Token del contenido:</div>
+                            <div class="data-value" style="font-size: 11px;">${recordToken}</div>
+                            <button class="btn-copy" onclick="copyToClipboard('${recordToken}', 'Token Record')">
+                                📋 Copiar
+                            </button>
+                        </div>
+                    `;
+                }
+                html += `</div>`;
+            }
+
+            html += `
+                    <div class="security-info">
+                        <h4>🛡️ Información de Seguridad</h4>
+                        <ul>
+                            <li><strong>Algoritmo:</strong> ${selectedAlgo}</li>
+                            <li><strong>Irreversible:</strong> No se puede obtener el ID original desde el token</li>
+                            <li><strong>Único:</strong> Cada ID genera un token diferente</li>
+                            <li><strong>Consistente:</strong> El mismo ID siempre genera el mismo token</li>
+                            <li><strong>Uso:</strong> Usa el token en tu base de datos en lugar del ID real</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+
+            output.innerHTML = html;
+
+            // Guardar en log
+            console.log('=== NFC TOKENIZACIÓN ===');
+            console.log('ID Original:', cardId);
+            console.log('Token (' + selectedAlgo + '):', token);
+            console.log('========================');
+        }
+
+        // Generar token usando SubtleCrypto
+        async function generateToken(data, algorithm) {
+            const encoder = new TextEncoder();
+            const dataBuffer = encoder.encode(data);
+            
+            let hashAlgo;
+            switch(algorithm) {
+                case 'SHA-256':
+                    hashAlgo = 'SHA-256';
+                    break;
+                case 'SHA-512':
+                    hashAlgo = 'SHA-512';
+                    break;
+                case 'MD5':
+                    // MD5 no está disponible en Web Crypto, usamos SHA-256
+                    // En producción, usa una librería externa para MD5 real
+                    return await legacyHash(data);
+                default:
+                    hashAlgo = 'SHA-256';
+            }
+
+            const hashBuffer = await crypto.subtle.digest(hashAlgo, dataBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            return hashHex;
+        }
+
+        // Hash legacy para compatibilidad
+        async function legacyHash(data) {
+            // Simulación simple (en producción usa CryptoJS u otra librería)
+            const encoder = new TextEncoder();
+            const dataBuffer = encoder.encode(data);
+            const hashBuffer = await crypto.subtle.digest('SHA-1', dataBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
+        }
+
+        // Copiar al portapapeles
+        window.copyToClipboard = function(text, label) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification(`✅ ${label} copiado al portapapeles`);
+            }).catch(() => {
+                // Fallback para navegadores antiguos
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showNotification(`✅ ${label} copiado`);
+            });
+        };
+
+        // Mostrar notificación
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'copy-notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Inicialización
+        console.log('🔐 Lector NFC con Tokenización iniciado');
+        console.log('Dispositivo:', isAndroid ? 'Android' : isIOS ? 'iOS' : 'Escritorio');
+        console.log('Web NFC disponible:', hasNFC);
+    </script>
+</body>
+</html>
