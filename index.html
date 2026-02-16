@@ -754,29 +754,26 @@
             console.log('Apple Pass JSON:', passJson);
         };
 
-      window.addToGoogleWallet = async function(passDataEncoded, name) {
-    // 1. Decodificamos el cardId real que viene en el base64
-    let cardId;
+    window.addToGoogleWallet = async function(passDataEncoded, name) {
+    let realCardId;
     try {
+        // Decodificamos el JSON que viene en el base64 del QR
         const decoded = JSON.parse(atob(passDataEncoded));
-        cardId = decoded.token; // Sacamos el ID real de la tarjeta física
+        realCardId = decoded.token; 
     } catch (e) {
-        console.error("Error al decodificar datos:", e);
-        cardId = passDataEncoded; 
+        // Si no es base64, usamos el valor directo
+        realCardId = passDataEncoded;
     }
 
-    console.log(`Generando pase para: ${name} (ID: ${cardId})...`);
+    console.log(`Solicitando pase para: ${name} (ID: ${realCardId})`);
     
     try {
-        // 2. Usamos 127.0.0.1 en lugar de localhost
         const response = await fetch('http://127.0.0.1:3000/api/wallet/generate-pass', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                token: cardId, 
-                name: name
+                cardId: realCardId,  // <--- Coincide con tu Backend
+                userName: name       // <--- Coincide con tu Backend
             })
         });
 
@@ -787,13 +784,11 @@
         } else {
             alert('Error del servidor: ' + (data.error || 'Error desconocido'));
         }
-
     } catch (error) {
-        console.error('Error detallado:', error);
-        alert('Fallo de conexión: Asegúrate de que el servidor Node.js esté corriendo en el puerto 3000 y que CORS esté activo.');
+        console.error('Error:', error);
+        alert('Fallo de conexión: Asegúrate de que el servidor Node.js esté corriendo.');
     }
 };
-
         // ========== VALIDAR ==========
         document.getElementById('validate-nfc').addEventListener('click', async () => {
             if (!isConnected) {
