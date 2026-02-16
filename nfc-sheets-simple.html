@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC + Google Sheets Simple</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .setup-box {
+            background: #e7f3ff;
+            border: 2px solid #007bff;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .setup-box h3 {
+            color: #004085;
+            margin-bottom: 15px;
+        }
+
+        .setup-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            margin: 10px 5px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20833a 100%);
+        }
+
+        .btn-small {
+            padding: 10px 25px;
+            font-size: 14px;
+        }
+
+        #output {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f7f7f7;
+            border-radius: 10px;
+            min-height: 100px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .status.waiting { background: #ffeaa7; color: #d63031; }
+        .status.reading { background: #74b9ff; color: #0984e3; }
+        .status.success { background: #55efc4; color: #00b894; }
+        .status.error { background: #ff7675; color: #d63031; }
+        .status.loading { background: #a29bfe; color: #6c5ce7; }
+
+        .card-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .card-info h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .user-card {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .user-card .name {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .user-card .welcome {
+            font-size: 18px;
+            color: #666;
+        }
+
+        .data-row {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .data-label {
+            color: #666;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .data-value {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #333;
+            word-break: break-all;
+        }
+
+        .sheet-status {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+
+        .sheet-connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .sheet-disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .instructions {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .instructions h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            color: #856404;
+            line-height: 1.8;
+            font-size: 14px;
+        }
+
+        .instructions code {
+            background: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .scanning {
+            animation: pulse 1.5s infinite;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 13px;
+        }
+
+        table th,
+        table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        .badge-new {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-registered {
+            background: #007bff;
+            color: white;
+        }
+
+        .token-box {
+            background: #e7f3ff;
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .token-box h4 {
+            color: #004085;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 NFC + Google Sheets</h1>
+        <p class="subtitle">Lee tarjetas NFC y guarda automáticamente en tu hoja de cálculo</p>
+
+        <!-- Configuración -->
+        <div class="setup-box">
+            <h3>🔗 Conectar Google Sheet</h3>
+            <p style="color: #004085; margin-bottom: 10px; font-size: 13px;">
+                Pega la URL de tu Google Apps Script aquí:
+            </p>
+            <input type="text" 
+                   id="sheet-url" 
+                   placeholder="https://script.google.com/macros/s/YOUR_ID/exec">
+            <button class="btn-success" onclick="connectSheet()">
+                🔌 Conectar
+            </button>
+            <button class="btn-small" onclick="testConnection()">
+                🧪 Probar
+            </button>
+            <div id="connection-status"></div>
+        </div>
+
+        <!-- Instrucciones -->
+        <details style="margin: 20px 0;">
+            <summary style="cursor: pointer; padding: 15px; background: #f8f9fa; border-radius: 8px; font-weight: 600; color: #667eea;">
+                📋 ¿Cómo configurar? (Click aquí)
+            </summary>
+            <div class="instructions" style="margin-top: 10px;">
+                <h4>Pasos rápidos:</h4>
+                <ol>
+                    <li>Crea Google Sheet con 3 columnas: <code>card_id</code>, <code>name</code>, <code>token</code></li>
+                    <li>Extensiones → Apps Script</li>
+                    <li>Pega el código (botón abajo)</li>
+                    <li>Implementar → Aplicación web → Acceso: "Cualquier usuario"</li>
+                    <li>Copia la URL y pégala arriba</li>
+                </ol>
+                <button class="btn-small" onclick="showCode()">
+                    📝 Ver Código de Apps Script
+                </button>
+            </div>
+        </details>
+
+        <!-- Botones principales -->
+        <div style="text-align: center; margin: 30px 0;">
+            <button id="read-nfc">🔍 Leer Tarjeta NFC</button>
+            <button onclick="viewAllCards()">📊 Ver Todas</button>
+        </div>
+
+        <!-- Output -->
+        <div id="output">
+            <span class="status waiting">⏳ Esperando...</span>
+            <p>Conecta tu Google Sheet y presiona "Leer Tarjeta NFC"</p>
+        </div>
+    </div>
+
+    <script>
+        const readButton = document.getElementById('read-nfc');
+        const output = document.getElementById('output');
+        const sheetUrlInput = document.getElementById('sheet-url');
+        const connectionStatus = document.getElementById('connection-status');
+
+        let sheetUrl = '';
+        let isConnected = false;
+
+        const hasNFC = 'NDEFReader' in window;
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        // Conectar Sheet
+        window.connectSheet = function() {
+            sheetUrl = sheetUrlInput.value.trim();
+            
+            if (!sheetUrl) {
+                alert('❌ Por favor ingresa la URL del Google Sheet');
+                return;
+            }
+
+            localStorage.setItem('nfc_sheet_url', sheetUrl);
+            connectionStatus.innerHTML = `
+                <div class="sheet-status sheet-connected">
+                    ✅ Conectado
+                </div>
+            `;
+            isConnected = true;
+        };
+
+        // Probar conexión
+        window.testConnection = async function() {
+            if (!sheetUrl) {
+                sheetUrl = sheetUrlInput.value.trim();
+                if (!sheetUrl) {
+                    alert('❌ Ingresa la URL primero');
+                    return;
+                }
+            }
+
+            connectionStatus.innerHTML = `
+                <div class="sheet-status" style="background: #a29bfe; color: #6c5ce7;">
+                    🔄 Probando...
+                </div>
+            `;
+
+            try {
+                const response = await fetch(sheetUrl + '?action=test');
+                const data = await response.json();
+                
+                if (data.status === 'ok') {
+                    connectionStatus.innerHTML = `
+                        <div class="sheet-status sheet-connected">
+                            ✅ Conexión OK - ${data.records || 0} tarjetas
+                        </div>
+                    `;
+                    isConnected = true;
+                } else {
+                    throw new Error('Respuesta inválida');
+                }
+            } catch (error) {
+                connectionStatus.innerHTML = `
+                    <div class="sheet-status sheet-disconnected">
+                        ❌ Error: ${error.message}
+                    </div>
+                `;
+                isConnected = false;
+            }
+        };
+
+        // Leer NFC
+        readButton.addEventListener('click', async () => {
+            if (!isConnected) {
+                alert('❌ Conecta tu Google Sheet primero');
+                return;
+            }
+
+            if (!hasNFC) {
+                if (isIOS) {
+                    showManualEntry();
+                } else {
+                    output.innerHTML = `
+                        <span class="status error">❌ Web NFC no soportado</span>
+                        <p>Usa Chrome en Android</p>
+                    `;
+                }
+                return;
+            }
+
+            try {
+                const ndef = new NDEFReader();
+                
+                output.innerHTML = `
+                    <span class="status reading scanning">🔍 Escaneando...</span>
+                    <p><strong>Acerca tu tarjeta NFC</strong></p>
+                `;
+                
+                readButton.disabled = true;
+                await ndef.scan();
+
+                ndef.addEventListener("reading", async ({ message, serialNumber }) => {
+                    await processCard(serialNumber);
+                    readButton.disabled = false;
+                });
+
+                ndef.addEventListener("readingerror", () => {
+                    output.innerHTML = `
+                        <span class="status error">⚠️ Error de lectura</span>
+                        <p>Intenta de nuevo</p>
+                    `;
+                    readButton.disabled = false;
+                });
+
+            } catch (error) {
+                output.innerHTML = `
+                    <span class="status error">❌ Error</span>
+                    <p>${error.message}</p>
+                `;
+                readButton.disabled = false;
+            }
+        });
+
+        // Procesar tarjeta
+        async function processCard(cardId) {
+            output.innerHTML = `
+                <span class="status loading">🔄 Buscando en Google Sheet...</span>
+            `;
+
+            try {
+                // Generar token automáticamente
+                const token = await generateToken(cardId);
+
+                // Buscar en Sheet
+                const response = await fetch(sheetUrl + '?action=find&card_id=' + encodeURIComponent(cardId));
+                const data = await response.json();
+
+                if (data.found) {
+                    // Ya existe
+                    displayRegisteredCard(cardId, token, data.record);
+                } else {
+                    // Nueva - pedir nombre
+                    displayNewCard(cardId, token);
+                }
+
+            } catch (error) {
+                output.innerHTML = `
+                    <span class="status error">❌ Error</span>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        // Mostrar tarjeta registrada
+        function displayRegisteredCard(cardId, token, record) {
+            output.innerHTML = `
+                <span class="status success">✅ ¡Tarjeta Reconocida!</span>
+                <div class="user-card">
+                    <div class="name">👋 ¡Hola ${record.name}!</div>
+                    <div class="welcome">Bienvenido de vuelta</div>
+                    <span class="badge badge-registered">Registrado</span>
+                </div>
+                <div class="card-info">
+                    <h3>📇 Detalles</h3>
+                    <div class="data-row">
+                        <div class="data-label">Nombre</div>
+                        <div class="data-value">${record.name}</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">ID de Tarjeta</div>
+                        <div class="data-value">${cardId}</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Token</div>
+                        <div class="data-value" style="font-size: 11px;">${token}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Mostrar nueva tarjeta
+        function displayNewCard(cardId, token) {
+            output.innerHTML = `
+                <span class="status" style="background: #ffd93d; color: #856404;">
+                    ⚠️ Tarjeta Nueva
+                </span>
+                <div class="card-info">
+                    <h3>📇 Registrar Nueva Tarjeta</h3>
+                    
+                    <div class="data-row">
+                        <div class="data-label">ID leído</div>
+                        <div class="data-value">${cardId}</div>
+                    </div>
+
+                    <div class="token-box">
+                        <h4>🔐 Token generado automáticamente:</h4>
+                        <div style="font-family: monospace; font-size: 11px; color: #004085; word-break: break-all; margin-top: 5px;">
+                            ${token}
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <label style="display: block; color: #667eea; font-weight: 600; margin-bottom: 8px;">
+                            ¿Quién es el dueño de esta tarjeta?
+                        </label>
+                        <input type="text" 
+                               id="new-user-name" 
+                               placeholder="Ej: Juan Pérez"
+                               style="width: 100%; padding: 12px; border: 2px solid #667eea; border-radius: 8px; font-size: 16px;">
+                        <button class="btn-success" onclick="saveCard('${cardId}', '${token}')" style="margin-top: 15px; width: 100%;">
+                            💾 Guardar en Google Sheet
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Guardar tarjeta
+        window.saveCard = async function(cardId, token) {
+            const name = document.getElementById('new-user-name').value.trim();
+            
+            if (!name) {
+                alert('❌ Por favor ingresa un nombre');
+                return;
+            }
+
+            output.innerHTML = `
+                <span class="status loading">💾 Guardando...</span>
+            `;
+
+            try {
+                const response = await fetch(sheetUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'add',
+                        card_id: cardId,
+                        name: name,
+                        token: token
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'ok') {
+                    output.innerHTML = `
+                        <span class="status success">✅ ¡Guardado!</span>
+                        <div class="user-card">
+                            <div class="name">🎉 ${name}</div>
+                            <div class="welcome">Tarjeta registrada exitosamente</div>
+                            <span class="badge badge-new">Nuevo</span>
+                        </div>
+                        <div class="card-info">
+                            <h3>✅ Datos guardados en Google Sheet:</h3>
+                            <div class="data-row">
+                                <div class="data-label">Nombre</div>
+                                <div class="data-value">${name}</div>
+                            </div>
+                            <div class="data-row">
+                                <div class="data-label">ID de Tarjeta</div>
+                                <div class="data-value">${cardId}</div>
+                            </div>
+                            <div class="data-row">
+                                <div class="data-label">Token Generado</div>
+                                <div class="data-value" style="font-size: 11px;">${token}</div>
+                            </div>
+                        </div>
+                        <button class="btn-small" onclick="viewAllCards()" style="margin-top: 15px;">
+                            📊 Ver Todas las Tarjetas
+                        </button>
+                    `;
+                } else {
+                    throw new Error(data.message || 'Error desconocido');
+                }
+
+            } catch (error) {
+                output.innerHTML = `
+                    <span class="status error">❌ Error</span>
+                    <p>${error.message}</p>
+                `;
+            }
+        };
+
+        // Ver todas
+        window.viewAllCards = async function() {
+            if (!isConnected) {
+                alert('❌ Conecta tu Google Sheet primero');
+                return;
+            }
+
+            output.innerHTML = `
+                <span class="status loading">📊 Cargando...</span>
+            `;
+
+            try {
+                const response = await fetch(sheetUrl + '?action=list');
+                const data = await response.json();
+
+                if (data.records && data.records.length > 0) {
+                    let html = `
+                        <span class="status success">📊 ${data.records.length} Tarjetas Registradas</span>
+                        <div class="card-info">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>ID Tarjeta</th>
+                                        <th>Token</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    data.records.forEach(record => {
+                        const shortToken = record.token ? record.token.substring(0, 12) + '...' : 'N/A';
+                        html += `
+                            <tr>
+                                <td><strong>${record.name}</strong></td>
+                                <td style="font-family: monospace; font-size: 11px;">${record.card_id}</td>
+                                <td style="font-family: monospace; font-size: 10px;">${shortToken}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+
+                    output.innerHTML = html;
+                } else {
+                    output.innerHTML = `
+                        <span class="status waiting">📋 Sin tarjetas</span>
+                        <p>No hay tarjetas registradas. Lee una tarjeta NFC para comenzar.</p>
+                    `;
+                }
+
+            } catch (error) {
+                output.innerHTML = `
+                    <span class="status error">❌ Error</span>
+                    <p>${error.message}</p>
+                `;
+            }
+        };
+
+        // Manual iOS
+        function showManualEntry() {
+            output.innerHTML = `
+                <div style="background: #fff3cd; padding: 20px; border-radius: 10px;">
+                    <h4 style="color: #856404;">🍎 iOS - Entrada Manual</h4>
+                    <p style="color: #856404; margin: 10px 0;">
+                        Lee el ID con Shortcuts/NFC Tools:
+                    </p>
+                    <input type="text" 
+                           id="manual-id" 
+                           placeholder="AA:BB:CC:DD:EE:FF"
+                           style="width: 100%; padding: 12px; border: 2px solid #ffc107; border-radius: 8px; margin: 10px 0;">
+                    <button class="btn-success" onclick="processManual()">
+                        🔍 Buscar
+                    </button>
+                </div>
+            `;
+        }
+
+        window.processManual = function() {
+            const cardId = document.getElementById('manual-id').value.trim();
+            if (cardId) {
+                processCard(cardId);
+            } else {
+                alert('❌ Ingresa un ID');
+            }
+        };
+
+        // Generar token SHA-256
+        async function generateToken(data) {
+            const encoder = new TextEncoder();
+            const dataBuffer = encoder.encode(data);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Mostrar código Apps Script
+        window.showCode = function() {
+            const code = `function doGet(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const action = e.parameter.action;
+  
+  if (action === 'test') {
+    const data = sheet.getDataRange().getValues();
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'ok',
+      records: data.length - 1
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  if (action === 'find') {
+    const cardId = e.parameter.card_id;
+    const data = sheet.getDataRange().getValues();
+    
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === cardId) {
+        return ContentService.createTextOutput(JSON.stringify({
+          found: true,
+          record: {
+            card_id: data[i][0],
+            name: data[i][1],
+            token: data[i][2]
+          }
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      found: false
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  if (action === 'list') {
+    const data = sheet.getDataRange().getValues();
+    const records = [];
+    
+    for (let i = 1; i < data.length; i++) {
+      records.push({
+        card_id: data[i][0],
+        name: data[i][1],
+        token: data[i][2]
+      });
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      records: records
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({
+    error: 'Invalid action'
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const action = e.parameter.action;
+  
+  if (action === 'add') {
+    sheet.appendRow([
+      e.parameter.card_id,
+      e.parameter.name,
+      e.parameter.token
+    ]);
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'ok'
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({
+    error: 'Invalid action'
+  })).setMimeType(ContentService.MimeType.JSON);
+}`;
+
+            const win = window.open('', '_blank');
+            win.document.write(`
+                <html>
+                <head>
+                    <title>Código Apps Script</title>
+                    <style>
+                        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+                        pre { background: white; padding: 20px; border-radius: 8px; overflow-x: auto; }
+                        button { background: #667eea; color: white; border: none; padding: 10px 20px; 
+                                border-radius: 5px; cursor: pointer; margin: 10px 0; }
+                    </style>
+                </head>
+                <body>
+                    <h2>📝 Código para Google Apps Script</h2>
+                    <p><strong>COLUMNAS EN SHEET:</strong> card_id | name | token</p>
+                    <button onclick="navigator.clipboard.writeText(document.querySelector('pre').textContent)">
+                        📋 Copiar Código
+                    </button>
+                    <pre>${code}</pre>
+                </body>
+                </html>
+            `);
+        };
+
+        // Cargar URL guardada
+        const savedUrl = localStorage.getItem('nfc_sheet_url');
+        if (savedUrl) {
+            sheetUrlInput.value = savedUrl;
+            sheetUrl = savedUrl;
+        }
+    </script>
+</body>
+</html>
