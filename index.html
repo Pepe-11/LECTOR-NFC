@@ -655,7 +655,7 @@
                     <button class="btn-wallet-apple" onclick="addToAppleWallet('${passDataEncoded}', '${name}')">
                         🍎 Añadir a Apple Wallet
                     </button>
-                    <button class="btn-wallet-google" onclick="enviaraWallet('${passDataEncoded}', '${name}')">
+                    <button class="btn-wallet-google" onclick="enviarAWallet('${passDataEncoded}', '${name}')">
                         🤖 Añadir a Google Wallet
                     </button>
                 </div>
@@ -754,37 +754,42 @@
             console.log('Apple Pass JSON:', passJson);
         };
 
-        async function enviarAWallet(cardId, userName) {
-            try {
-                // Llamada a tu servidor Node.js
-                const response = await fetch('http://localhost:3000/api/wallet/generate-pass', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cardId, userName })
-                });
-        
-                const data = await response.json();
-        
-                if (data.success) {
-                    // Opción A: Redirigir directamente a la página de Google para guardar
-                    window.open(data.saveUrl, '_blank');
-                } else {
-                    alert("Error al generar el pase: " + data.error);
-                }
-            } catch (error) {
-                console.error("Error de conexión:", error);
-            }
+       window.addToGoogleWallet = async function(cardId, name) {
+    // 1. Mostrar un indicador de carga (opcional pero recomendado)
+    console.log(`Generando pase para: ${name} (ID: ${cardId})...`);
+    
+    try {
+        // 2. Llamamos a tu servidor Node.js real
+        // Asegúrate de que la URL coincida con donde corre tu backend (localhost o IP)
+        const response = await fetch('http://localhost:3000/api/wallet/generate-pass', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                token: cardId, // El ID de la tarjeta física que ya tienes en tu base de datos
+                name: name     // El nombre del usuario
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.saveUrl) {
+            // 3. ¡ÉXITO! Redirigimos al usuario a la URL oficial de Google Wallet
+            // Abrimos en una pestaña nueva para no cerrar tu App Web
+            window.open(data.saveUrl, '_blank');
+        } else {
+            // Manejo de errores del servidor
+            console.error('Error del servidor:', data.error);
+            alert('No se pudo generar el pase: ' + (data.error || 'Error desconocido'));
         }
 
-        window.downloadQR = function(name) {
-            const canvas = document.querySelector('#qr-backup canvas');
-            if (canvas) {
-                const link = document.createElement('a');
-                link.download = `Pase_${name}_${Date.now()}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-            }
-        };
+    } catch (error) {
+        // Manejo de errores de conexión (ej: el servidor Node.js está apagado)
+        console.error('Error de red:', error);
+        alert('Error de conexión con el servidor de Wallet. Asegúrate de que el backend esté corriendo.');
+    }
+};
 
         // ========== VALIDAR ==========
         document.getElementById('validate-nfc').addEventListener('click', async () => {
