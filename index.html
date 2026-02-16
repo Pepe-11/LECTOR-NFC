@@ -754,26 +754,29 @@
             console.log('Apple Pass JSON:', passJson);
         };
 
-    window.addToGoogleWallet = async function(passDataEncoded, name) {
-    let realCardId;
+   window.addToGoogleWallet = async function(passDataEncoded, name) {
+    let realToken;
     try {
-        // Decodificamos el JSON que viene en el base64 del QR
+        // Intentamos decodificar si viene en Base64 desde el registro
         const decoded = JSON.parse(atob(passDataEncoded));
-        realCardId = decoded.token; 
+        realToken = decoded.token; 
     } catch (e) {
-        // Si no es base64, usamos el valor directo
-        realCardId = passDataEncoded;
+        // Si falla (o si viene de la lista de usuarios), usamos el valor directo
+        realToken = passDataEncoded;
     }
 
-    console.log(`Solicitando pase para: ${name} (ID: ${realCardId})`);
-    
+    // IMPORTANTE: Cambia 'localhost' por la IP de tu PC si pruebas desde el móvil
+    const serverIP = "localhost"; 
+
     try {
-        const response = await fetch('http://localhost:3000/api/wallet/generate-pass', {
+        const response = await fetch(`http://${serverIP}:3000/api/wallet/generate-pass`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+            },
             body: JSON.stringify({ 
-                cardId: realCardId,  // <--- Coincide con tu Backend
-                userName: name       // <--- Coincide con tu Backend
+                token: realToken, // Nombre exacto que espera tu servidor
+                name: name        // Nombre exacto que espera tu servidor
             })
         });
 
@@ -785,8 +788,8 @@
             alert('Error del servidor: ' + (data.error || 'Error desconocido'));
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('Fallo de conexión: Asegúrate de que el servidor Node.js esté corriendo.');
+        console.error('Error de conexión:', error);
+        alert('Fallo de conexión: No se pudo contactar con el servidor en el puerto 3000.');
     }
 };
         // ========== VALIDAR ==========
