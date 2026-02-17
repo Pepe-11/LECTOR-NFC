@@ -769,7 +769,7 @@
     const serverIP = "localhost"; 
 
     try {
-        const response = await fetch(`http://${serverIP}:3000/api/wallet/generate-pass`, {
+        const response = await fetch('https://lector-nfc-production.up.railway.app/api/wallet/generate-pass', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
