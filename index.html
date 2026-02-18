@@ -766,19 +766,18 @@
     }
 
     // IMPORTANTE: Cambia 'localhost' por la IP de tu PC si pruebas desde el móvil
-    const serverIP = "localhost"; 
+    const SERVER_URL = "https://lector-nfc.up.railway.app"; // <--- Pon tu dominio aquí
 
-    try {
-        const response = await fetch('https://lector-nfc-production.up.railway.app/api/wallet/generate-pass', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                token: realToken, // Nombre exacto que espera tu servidor
-                name: name        // Nombre exacto que espera tu servidor
-            })
-        });
+const response = await fetch(`${SERVER_URL}/api/wallet/generate-pass`, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ 
+        token: realToken, 
+        name: name
+    })
+});
 
         const data = await response.json();
 
