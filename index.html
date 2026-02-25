@@ -1,1033 +1,535 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFC Wallet-Grade System</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CheckTask - Verificación NFC</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 1000px;
-            margin: 0 auto;
-        }
+    .container {
+      width: 100%;
+      max-width: 420px;
+      padding: 24px;
+    }
 
-        h1 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 28px;
-            text-align: center;
-        }
+    .card {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 32px;
+      border: 1px solid #334155;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    }
 
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-            text-align: center;
-        }
+    .logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
 
-        .security-badges {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin: 20px 0;
-        }
+    .logo-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
 
-        .badge {
-            display: inline-block;
-            background: #28a745;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
+    .logo h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
 
-        .badge.wallet {
-            background: #000;
-        }
+    .logo p {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 4px;
+    }
 
-        .setup-box {
-            background: #e7f3ff;
-            border: 2px solid #007bff;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-        }
+    /* Estado de verificación */
+    .status-box {
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+    }
 
-        .setup-box h3 {
-            color: #004085;
-            margin-bottom: 15px;
-        }
+    .status-box.checking  { background: #1e3a5f; border: 1px solid #3b82f6; color: #93c5fd; }
+    .status-box.success   { background: #14532d; border: 1px solid #22c55e; color: #86efac; }
+    .status-box.error     { background: #450a0a; border: 1px solid #ef4444; color: #fca5a5; }
+    .status-box.warning   { background: #451a03; border: 1px solid #f59e0b; color: #fcd34d; }
 
-        .setup-box input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #007bff;
-            border-radius: 8px;
-            font-size: 14px;
-            margin: 10px 0;
-        }
+    .status-icon { font-size: 20px; flex-shrink: 0; }
 
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 18px;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            margin: 10px 5px;
-        }
+    /* Formulario login */
+    .form-group {
+      margin-bottom: 16px;
+    }
 
-        button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
 
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
+    input {
+      width: 100%;
+      padding: 11px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #f1f5f9;
+      font-size: 15px;
+      transition: border-color 0.2s;
+    }
 
-        .btn-success {
-            background: linear-gradient(135deg, #28a745 0%, #20833a 100%);
-        }
+    input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
 
-        .btn-wallet-apple {
-            background: #000;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            justify-content: center;
-        }
+    input::placeholder { color: #475569; }
 
-        .btn-wallet-google {
-            background: #4285f4;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            justify-content: center;
-        }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
 
-        .btn-small {
-            padding: 10px 25px;
-            font-size: 14px;
-        }
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+    }
 
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #f0f0f0;
-            overflow-x: auto;
-        }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        .tab {
-            padding: 15px 30px;
-            background: none;
-            border: none;
-            border-bottom: 3px solid transparent;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            color: #666;
-            transition: all 0.3s;
-            white-space: nowrap;
-        }
+    /* Info de tarea */
+    .task-info {
+      background: #0f172a;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 20px;
+      border: 1px solid #1e3a5f;
+    }
 
-        .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-        }
+    .task-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      padding: 4px 0;
+    }
 
-        .tab-content {
-            display: none;
-        }
+    .task-info-label { color: #64748b; }
+    .task-info-value { color: #93c5fd; font-weight: 500; font-family: monospace; }
 
-        .tab-content.active {
-            display: block;
-        }
+    /* Spinner */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #334155;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
 
-        #output {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f7f7f7;
-            border-radius: 10px;
-            min-height: 100px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-        .status {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
+    .hidden { display: none; }
 
-        .status.waiting { background: #ffeaa7; color: #d63031; }
-        .status.reading { background: #74b9ff; color: #0984e3; }
-        .status.success { background: #55efc4; color: #00b894; }
-        .status.error { background: #ff7675; color: #d63031; }
-        .status.loading { background: #a29bfe; color: #6c5ce7; }
+    .divider {
+      border: none;
+      border-top: 1px solid #1e293b;
+      margin: 20px 0;
+    }
 
-        .user-card {
-            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
-            border: 2px solid #667eea;
-            border-radius: 12px;
-            padding: 30px;
-            margin: 15px 0;
-            text-align: center;
-        }
+    .session-info {
+      font-size: 12px;
+      color: #475569;
+      text-align: center;
+      margin-top: 16px;
+    }
 
-        .user-card .name {
-            font-size: 32px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 15px;
-        }
-
-        .card-info {
-            margin-top: 20px;
-            padding: 20px;
-            background: white;
-            border-radius: 12px;
-            border-left: 4px solid #667eea;
-        }
-
-        .data-row {
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 8px;
-            margin: 10px 0;
-        }
-
-        .data-label {
-            color: #666;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        .data-value {
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            color: #333;
-            word-break: break-all;
-        }
-
-        .qr-container {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin: 20px 0;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .qr-container canvas {
-            max-width: 100%;
-            height: auto;
-            margin: 20px auto;
-            display: block;
-            border: 3px solid #667eea;
-            border-radius: 10px;
-            padding: 10px;
-            background: white;
-        }
-
-        .wallet-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin: 20px 0;
-        }
-
-        .pass-preview {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin: 20px 0;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-
-        .pass-preview h3 {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-            opacity: 0.7;
-        }
-
-        .pass-preview .pass-name {
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-
-        .pass-barcode {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-
-        .security-info {
-            background: #d4edda;
-            border: 2px solid #28a745;
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .security-info h4 {
-            color: #155724;
-            margin-bottom: 10px;
-        }
-
-        .security-info ul {
-            margin-left: 20px;
-            color: #155724;
-            line-height: 1.8;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .scanning {
-            animation: pulse 1.5s infinite;
-        }
-
-        .sheet-status {
-            display: inline-block;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            margin: 10px 0;
-        }
-
-        .sheet-connected {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-            font-size: 13px;
-        }
-
-        table th,
-        table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        table th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #667eea;
-        }
-    </style>
-    
-    <!-- QRCode.js Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    .countdown {
+      font-size: 12px;
+      color: #f59e0b;
+      text-align: center;
+      margin-top: 8px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔐 NFC Wallet-Grade System</h1>
-        <p class="subtitle">Seguridad nivel bancario con integración real a Apple/Google Wallet</p>
 
-        <div class="security-badges">
-            <span class="badge">🔒 EMV-Style Cryptogram</span>
-            <span class="badge">🔄 Dynamic Counter</span>
-            <span class="badge">🛡️ Challenge-Response</span>
-            <span class="badge wallet">📲 Real Wallet Integration</span>
-        </div>
+<div class="container">
+  <div class="card">
 
-        <!-- Conexión Google Sheets -->
-        <div class="setup-box">
-            <h3>🔗 Google Sheet</h3>
-            <input type="text" 
-                   id="sheet-url" 
-                   placeholder="https://script.google.com/macros/s/YOUR_ID/exec">
-            <button class="btn-success" onclick="connectSheet()">🔌 Conectar</button>
-            <button class="btn-small" onclick="testConnection()">🧪 Probar</button>
-            <div id="connection-status"></div>
-        </div>
-
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('register')">
-                📝 Registrar NFC
-            </button>
-            <button class="tab" onclick="switchTab('validate')">
-                ✓ Validar Acceso
-            </button>
-            <button class="tab" onclick="switchTab('users')">
-                👥 Usuarios
-            </button>
-        </div>
-
-        <!-- Tab 1: Registrar -->
-        <div id="tab-register" class="tab-content active">
-            <h2 style="color: #667eea; margin-bottom: 20px;">Registrar Tarjeta NFC</h2>
-            <button id="read-nfc" style="width: 100%; max-width: 400px; display: block; margin: 0 auto;">
-                🔍 Leer Tarjeta NFC
-            </button>
-            <div id="output-register"></div>
-        </div>
-
-        <!-- Tab 2: Validar -->
-        <div id="tab-validate" class="tab-content">
-            <h2 style="color: #667eea; margin-bottom: 20px;">Validar Acceso</h2>
-            <button id="validate-nfc" style="width: 100%; max-width: 400px; display: block; margin: 0 auto;">
-                ✓ Validar con NFC
-            </button>
-            <div id="output-validate"></div>
-        </div>
-
-        <!-- Tab 3: Usuarios -->
-        <div id="tab-users" class="tab-content">
-            <h2 style="color: #667eea; margin-bottom: 20px;">Usuarios Registrados</h2>
-            <button onclick="loadAllUsers()">🔄 Actualizar Lista</button>
-            <div id="users-list"></div>
-        </div>
+    <div class="logo">
+      <div class="logo-icon">📋</div>
+      <h1>CheckTask</h1>
+      <p>Verificación de presencia NFC</p>
     </div>
 
-    <script>
-        // Variables globales
-        let sheetUrl = '';
-        let isConnected = false;
-        const hasNFC = 'NDEFReader' in window;
-        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    <!-- Estado del proceso -->
+    <div id="status-box" class="status-box checking">
+      <div class="spinner"></div>
+      <span id="status-text">Verificando token NFC...</span>
+    </div>
 
-        // Cargar URL guardada
-        const savedUrl = localStorage.getItem('nfc_sheet_url');
-        if (savedUrl) {
-            document.getElementById('sheet-url').value = savedUrl;
-            sheetUrl = savedUrl;
-        }
+    <!-- Info de la tarea (se muestra cuando el token es válido) -->
+    <div id="task-info" class="task-info hidden">
+      <div class="task-info-row">
+        <span class="task-info-label">Tarea</span>
+        <span class="task-info-value" id="info-task">—</span>
+      </div>
+      <div class="task-info-row">
+        <span class="task-info-label">UID tarjeta</span>
+        <span class="task-info-value" id="info-uid">—</span>
+      </div>
+      <div class="task-info-row">
+        <span class="task-info-label">Lectura nº</span>
+        <span class="task-info-value" id="info-cnt">—</span>
+      </div>
+    </div>
 
-        // ========== TABS ==========
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            
-            document.getElementById('tab-' + tabName).classList.add('active');
-            event.target.classList.add('active');
-        }
+    <!-- Formulario de login -->
+    <div id="login-form" class="hidden">
+      <hr class="divider">
+      <div class="form-group">
+        <label for="username">Usuario</label>
+        <input type="text" id="username" placeholder="tu@email.com" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Iniciar sesión</button>
+    </div>
 
-        // ========== CONEXIÓN ==========
-        window.connectSheet = function() {
-            sheetUrl = document.getElementById('sheet-url').value.trim();
-            if (!sheetUrl) {
-                alert('❌ Ingresa la URL');
-                return;
-            }
-            localStorage.setItem('nfc_sheet_url', sheetUrl);
-            document.getElementById('connection-status').innerHTML = `
-                <div class="sheet-status sheet-connected">✅ Conectado</div>
-            `;
-            isConnected = true;
-        };
+    <!-- Botón check (se muestra cuando ya está logueado) -->
+    <div id="check-form" class="hidden">
+      <hr class="divider">
+      <button class="btn btn-primary" id="check-btn" onclick="checkTask()">
+        ✅ Chequear tarea
+      </button>
+      <div class="countdown" id="countdown"></div>
+    </div>
 
-        window.testConnection = async function() {
-            if (!sheetUrl) {
-                sheetUrl = document.getElementById('sheet-url').value.trim();
-                if (!sheetUrl) {
-                    alert('❌ Ingresa URL primero');
-                    return;
-                }
-            }
+    <div class="session-info" id="session-info"></div>
 
-            try {
-                const response = await fetch(sheetUrl + '?action=test');
-                const data = await response.json();
-                
-                if (data.status === 'ok') {
-                    document.getElementById('connection-status').innerHTML = `
-                        <div class="sheet-status sheet-connected">
-                            ✅ OK - ${data.records || 0} usuarios
-                        </div>
-                    `;
-                    isConnected = true;
-                }
-            } catch (error) {
-                document.getElementById('connection-status').innerHTML = `
-                    <div class="sheet-status" style="background: #f8d7da; color: #721c24;">
-                        ❌ Error: ${error.message}
-                    </div>
-                `;
-            }
-        };
+  </div>
+</div>
 
-        // ========== REGISTRAR ==========
-        document.getElementById('read-nfc').addEventListener('click', async () => {
-            if (!isConnected) {
-                alert('❌ Conecta Google Sheet primero');
-                return;
-            }
+<script>
+// ─────────────────────────────────────────────────────────────
+// CONFIGURACIÓN - Ajusta estos valores
+// ─────────────────────────────────────────────────────────────
 
-            if (!hasNFC) {
-                document.getElementById('output-register').innerHTML = `
-                    <div class="status error">❌ Web NFC no soportado</div>
-                    <p>Usa Chrome en Android</p>
-                `;
-                return;
-            }
+const CONFIG = {
+  // URL de tu Google Apps Script (ver instrucciones abajo)
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycby4Xkkw7ZYZAIyEkY8qUKQITiXC8to1eAOU1OWYpbvJhVuCGkMXjgYf5AFPjDHQvvjDxg/exec",
 
-            try {
-                const ndef = new NDEFReader();
-                document.getElementById('output-register').innerHTML = `
-                    <div class="status reading scanning">🔍 Escaneando...</div>
-                    <p><strong>Acerca tu tarjeta NFC</strong></p>
-                `;
-                
-                await ndef.scan();
+  // Clave AES en hex (debe coincidir con la del script Python)
+  // ⚠️ En producción esto debe estar en el servidor, no en el cliente
+  // Por ahora lo dejamos aquí para la demo con Google Sheets
+  AES_KEY_HEX: "00000000000000000000000000000000",
 
-                ndef.addEventListener("reading", async ({ serialNumber }) => {
-                    await registerCard(serialNumber);
-                });
+  // Segundos que tiene el token NFC para ser usado desde que se escanea
+  TOKEN_EXPIRY_SECONDS: 120,
 
-            } catch (error) {
-                document.getElementById('output-register').innerHTML = `
-                    <div class="status error">❌ Error: ${error.message}</div>
-                `;
-            }
-        });
+  // Segundos máximos entre lectura NFC y check (ventana de presencia)
+  PRESENCE_WINDOW_SECONDS: 300,
+};
 
-        async function registerCard(cardId) {
-            document.getElementById('output-register').innerHTML = `
-                <div class="status loading">🔄 Generando credenciales...</div>
-            `;
+// ─────────────────────────────────────────────────────────────
+// ESTADO DE LA APP
+// ─────────────────────────────────────────────────────────────
 
-            try {
-                // Generar token fijo (identifica al usuario)
-                const token = await generateToken(cardId);
-                
-                // Generar secret key (para cryptograms)
-                const secretKey = await generateSecretKey(cardId, token);
+const state = {
+  uid: null,
+  cnt: null,
+  mac: null,
+  task: null,
+  redirectUrl: null,
+  tokenValid: false,
+  loggedIn: false,
+  user: null,
+  scanTimestamp: null,
+};
 
-                document.getElementById('output-register').innerHTML = `
-                    <div class="status" style="background: #ffd93d; color: #856404;">
-                        📝 Registrar Usuario
-                    </div>
-                    <div class="card-info">
-                        <h3>Credenciales Generadas</h3>
-                        
-                        <div class="data-row" style="background: #e7f3ff; border: 2px solid #007bff;">
-                            <div class="data-label">🔑 Token (Identificador Permanente)</div>
-                            <div class="data-value" style="font-size: 11px;">${token}</div>
-                        </div>
+// ─────────────────────────────────────────────────────────────
+// ARRANQUE - Leer parámetros de la URL
+// ─────────────────────────────────────────────────────────────
 
-                        <div class="data-row" style="background: #fff3cd; border: 2px solid #ffc107;">
-                            <div class="data-label">🔐 Secret Key (Clave Criptográfica)</div>
-                            <div class="data-value" style="font-size: 11px;">${secretKey}</div>
-                        </div>
+window.addEventListener('DOMContentLoaded', async () => {
+  const params = new URLSearchParams(window.location.search);
 
-                        <div style="margin-top: 20px;">
-                            <label style="display: block; font-weight: 600; margin-bottom: 8px;">
-                                Nombre del usuario:
-                            </label>
-                            <input type="text" 
-                                   id="new-name" 
-                                   placeholder="Ej: Juan Pérez"
-                                   style="width: 100%; padding: 12px; border: 2px solid #667eea; border-radius: 8px; font-size: 16px;">
-                            <button class="btn-success" onclick="saveUser('${token}', '${secretKey}', '${cardId}')" 
-                                    style="margin-top: 15px; width: 100%;">
-                                💾 Guardar y Generar Pase para Wallet
-                            </button>
-                        </div>
-                    </div>
+  state.uid  = params.get('uid');
+  state.cnt  = params.get('cnt');
+  state.mac  = params.get('mac');
+  state.task = params.get('task');
+  state.scanTimestamp = Date.now();
 
-                    <div class="security-info">
-                        <h4>🛡️ Sistema EMV-Style:</h4>
-                        <ul>
-                            <li><strong>Token:</strong> Identificador único del usuario (como PAN en tarjetas)</li>
-                            <li><strong>Secret Key:</strong> Clave para generar cryptograms (como ARQC)</li>
-                            <li><strong>Contador:</strong> Se incrementa en cada uso (ATC)</li>
-                            <li><strong>Cryptogram:</strong> Se genera dinámicamente en cada validación</li>
-                        </ul>
-                    </div>
-                `;
-            } catch (error) {
-                document.getElementById('output-register').innerHTML = `
-                    <div class="status error">❌ Error: ${error.message}</div>
-                `;
-            }
-        }
+  if (!state.uid || !state.cnt || !state.mac || !state.task) {
+    showStatus('error', '❌ URL inválida. Escanea la tarjeta NFC de nuevo.');
+    return;
+  }
 
-        window.saveUser = async function(token, secretKey, initialId) {
-            const name = document.getElementById('new-name').value.trim();
-            if (!name) {
-                alert('❌ Ingresa un nombre');
-                return;
-            }
+  // Mostrar info de tarea
+  document.getElementById('info-task').textContent = decodeURIComponent(state.task);
+  document.getElementById('info-uid').textContent  = state.uid;
+  document.getElementById('info-cnt').textContent  = `#${parseInt(state.cnt, 16)}`;
+  document.getElementById('task-info').classList.remove('hidden');
 
-            try {
-                const response = await fetch(sheetUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        action: 'register',
-                        token: token,
-                        name: name,
-                        secret_key: secretKey,
-                        counter: '0',
-                        initial_id: initialId
-                    })
-                });
-
-                const data = await response.json();
-                if (data.status === 'ok') {
-                    await generateWalletPass(token, name, secretKey);
-                }
-            } catch (error) {
-                alert('❌ Error: ' + error.message);
-            }
-        };
-
-        async function generateWalletPass(token, name, secretKey) {
-            // Generar datos para el pase de Wallet
-            const passData = {
-                token: token,
-                name: name,
-                secretKey: secretKey,
-                issueDate: new Date().toISOString()
-            };
-
-            // Codificar como base64 para el QR
-            const passDataEncoded = btoa(JSON.stringify(passData));
-
-            document.getElementById('output-register').innerHTML = `
-                <div class="status success">✅ ¡Usuario Registrado!</div>
-                
-                <div class="user-card">
-                    <div class="name">🎉 ${name}</div>
-                    <p style="margin-top: 10px; color: #666;">
-                        Sistema EMV-Style activado
-                    </p>
-                </div>
-
-                <div class="pass-preview">
-                    <h3>Pase de Acceso</h3>
-                    <div class="pass-name">${name}</div>
-                    <div style="margin: 20px 0;">
-                        <div style="font-size: 12px; opacity: 0.7; margin-bottom: 5px;">TOKEN</div>
-                        <div style="font-family: monospace; font-size: 14px;">${token.substring(0, 16)}...</div>
-                    </div>
-                    <div class="pass-barcode" id="qr-pass"></div>
-                </div>
-
-                <div class="wallet-buttons">
-                    <button class="btn-wallet-apple" onclick="addToAppleWallet('${passDataEncoded}', '${name}')">
-                        🍎 Añadir a Apple Wallet
-                    </button>
-                    <button class="btn-wallet-google" onclick="addToGoogleWallet('${passDataEncoded}', '${name}')">
-                        🤖 Añadir a Google Wallet
-                    </button>
-                </div>
-
-                <div class="qr-container">
-                    <h3 style="color: #667eea; margin-bottom: 15px;">
-                        QR de Respaldo (para apps de terceros)
-                    </h3>
-                    <div id="qr-backup"></div>
-                    <button class="btn-small" onclick="downloadQR('${name}')">
-                        📥 Descargar QR
-                    </button>
-                    <p style="margin-top: 10px; font-size: 12px; color: #666;">
-                        Este QR contiene las credenciales cifradas del usuario
-                    </p>
-                </div>
-
-                <div class="card-info">
-                    <h4 style="color: #667eea; margin-bottom: 10px;">📊 Configuración del Sistema:</h4>
-                    <div class="data-row">
-                        <div class="data-label">Algoritmo Cryptogram</div>
-                        <div class="data-value">HMAC-SHA256 (EMV-inspired)</div>
-                    </div>
-                    <div class="data-row">
-                        <div class="data-label">Contador Inicial</div>
-                        <div class="data-value">0</div>
-                    </div>
-                    <div class="data-row">
-                        <div class="data-label">Modo de Validación</div>
-                        <div class="data-value">Challenge-Response + Counter</div>
-                    </div>
-                </div>
-            `;
-
-            // Generar QR del pase (datos completos)
-            new QRCode(document.getElementById("qr-pass"), {
-                text: passDataEncoded,
-                width: 200,
-                height: 200,
-                colorDark: "#ffffff",
-                colorLight: "#000000",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-
-            // Generar QR de respaldo (solo token)
-            new QRCode(document.getElementById("qr-backup"), {
-                text: token,
-                width: 300,
-                height: 300,
-                colorDark: "#667eea",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-        }
-
-        // ========== WALLET INTEGRATION ==========
-        window.addToAppleWallet = function(passData, name) {
-            // Crear archivo .pkpass simulado
-            const passJson = {
-                passTypeIdentifier: "pass.com.tuempresa.acceso",
-                teamIdentifier: "YOURTEAMID",
-                organizationName: "Tu Empresa",
-                serialNumber: Date.now().toString(),
-                description: "Pase de Acceso - " + name,
-                formatVersion: 1,
-                barcode: {
-                    message: passData,
-                    format: "PKBarcodeFormatQR",
-                    messageEncoding: "iso-8859-1"
-                },
-                generic: {
-                    primaryFields: [{
-                        key: "name",
-                        label: "Nombre",
-                        value: name
-                    }],
-                    secondaryFields: [{
-                        key: "type",
-                        label: "Tipo",
-                        value: "Acceso NFC"
-                    }],
-                    auxiliaryFields: [{
-                        key: "valid",
-                        label: "Válido",
-                        value: "Permanente"
-                    }]
-                },
-                backgroundColor: "rgb(102, 126, 234)",
-                foregroundColor: "rgb(255, 255, 255)",
-                labelColor: "rgb(255, 255, 255)"
-            };
-
-            // En producción, esto generaría un .pkpass real
-            alert(`🍎 Para producción necesitas:\n\n1. Apple Developer Account ($99/año)\n2. Pass Type ID certificado\n3. Servidor que firme .pkpass\n\nPor ahora:\n• Descarga el QR\n• Guárdalo en Fotos\n• O usa Google Wallet (más fácil)`);
-            
-            console.log('Apple Pass JSON:', passJson);
-        };
-
-   window.addToGoogleWallet = async function(passDataEncoded, name) {
-    let realToken;
-    try {
-        // Intentamos decodificar si viene en Base64 desde el registro
-        const decoded = JSON.parse(atob(passDataEncoded));
-        realToken = decoded.token; 
-    } catch (e) {
-        // Si falla (o si viene de la lista de usuarios), usamos el valor directo
-        realToken = passDataEncoded;
-    }
-
-    // IMPORTANTE: Cambia 'localhost' por la IP de tu PC si pruebas desde el móvil
-    const SERVER_URL = "https://lector-nfc.up.railway.app"; // <--- Pon tu dominio aquí
-
-const response = await fetch(`${SERVER_URL}/api/wallet/generate-pass`, {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ 
-        token: realToken, 
-        name: name
-    })
+  // Verificar token con el servidor (Google Apps Script)
+  await verifyToken();
 });
 
-        const data = await response.json();
+// ─────────────────────────────────────────────────────────────
+// VERIFICACIÓN DEL TOKEN SDM
+// ─────────────────────────────────────────────────────────────
 
-        if (data.success && data.saveUrl) {
-            window.open(data.saveUrl, '_blank');
-        } else {
-            alert('Error del servidor: ' + (data.error || 'Error desconocido'));
-        }
-    } catch (error) {
-        console.error('Error de conexión:', error);
-        alert('Fallo de conexión: No se pudo contactar con el servidor en el puerto 3000.');
+async function verifyToken() {
+  showStatus('checking', 'Verificando autenticidad del token NFC...');
+
+  try {
+    const resp = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'verify_token',
+        uid:    state.uid,
+        cnt:    state.cnt,
+        mac:    state.mac,
+        task:   state.task,
+      })
+    });
+
+    const data = await resp.json();
+
+    if (!data.valid) {
+      showStatus('error', `❌ Token inválido: ${data.reason || 'MAC incorrecto o contador repetido'}`);
+      return;
     }
-};
-        // ========== VALIDAR ==========
-        document.getElementById('validate-nfc').addEventListener('click', async () => {
-            if (!isConnected) {
-                alert('❌ Conecta Google Sheet primero');
-                return;
-            }
 
-            if (!hasNFC) {
-                document.getElementById('output-validate').innerHTML = `
-                    <div class="status error">❌ Web NFC no soportado</div>
-                `;
-                return;
-            }
+    state.tokenValid = true;
+    state.redirectUrl = data.redirectUrl;
 
-            try {
-                const ndef = new NDEFReader();
-                document.getElementById('output-validate').innerHTML = `
-                    <div class="status reading scanning">🔍 Validando...</div>
-                    <p><strong>Acerca la tarjeta o escanea el QR del usuario</strong></p>
-                `;
-                
-                await ndef.scan();
+    showStatus('success', '✅ Presencia física verificada. Token válido.');
+    startCountdown();
 
-                ndef.addEventListener("reading", async ({ serialNumber }) => {
-                    await validateAccess(serialNumber);
-                });
+    // Comprobar si ya hay sesión activa
+    const session = getSession();
+    if (session) {
+      state.loggedIn = true;
+      state.user = session.user;
+      document.getElementById('session-info').textContent = `Sesión activa: ${session.user}`;
+      document.getElementById('check-form').classList.remove('hidden');
+    } else {
+      document.getElementById('login-form').classList.remove('hidden');
+    }
 
-            } catch (error) {
-                document.getElementById('output-validate').innerHTML = `
-                    <div class="status error">❌ Error: ${error.message}</div>
-                `;
-            }
-        });
+  } catch (err) {
+    console.error(err);
+    showStatus('error', '❌ Error de conexión. Comprueba la configuración del servidor.');
+  }
+}
 
-        async function validateAccess(identifier) {
-            document.getElementById('output-validate').innerHTML = `
-                <div class="status loading">🔄 Generando challenge...</div>
-            `;
+// ─────────────────────────────────────────────────────────────
+// LOGIN CON GOOGLE SHEETS
+// ─────────────────────────────────────────────────────────────
 
-            try {
-                // Generar challenge aleatorio
-                const challenge = await generateChallenge();
-                
-                // Buscar usuario por identifier
-                const token = await generateToken(identifier);
-                
-                const response = await fetch(sheetUrl + '?action=validate&token=' + encodeURIComponent(token) + '&challenge=' + encodeURIComponent(challenge));
-                const data = await response.json();
+async function doLogin() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
 
-                if (data.valid) {
-                    // Generar cryptogram esperado
-                    const expectedCryptogram = await generateCryptogram(
-                        data.secret_key,
-                        challenge,
-                        data.counter
-                    );
+  if (!username || !password) {
+    showStatus('warning', '⚠️ Introduce usuario y contraseña.');
+    return;
+  }
 
-                    // En un sistema real, el cryptogram vendría de la tarjeta
-                    // Aquí lo generamos para demostración
-                    const receivedCryptogram = expectedCryptogram;
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+  showStatus('checking', 'Comprobando credenciales...');
 
-                    if (receivedCryptogram === expectedCryptogram) {
-                        // Incrementar contador
-                        await incrementCounter(token, data.counter);
+  try {
+    const resp = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'login',
+        username,
+        password,
+      })
+    });
 
-                        document.getElementById('output-validate').innerHTML = `
-                            <div class="status success">✅ Acceso Autorizado</div>
-                            <div class="user-card">
-                                <div class="name">👋 ¡Bienvenido ${data.name}!</div>
-                                <p style="margin-top: 10px; color: #666;">
-                                    ${new Date().toLocaleString('es-ES')}
-                                </p>
-                            </div>
-                            <div class="card-info">
-                                <h3>📊 Detalles de Validación EMV-Style</h3>
-                                <div class="data-row">
-                                    <div class="data-label">Challenge</div>
-                                    <div class="data-value">${challenge}</div>
-                                </div>
-                                <div class="data-row">
-                                    <div class="data-label">Cryptogram (ARQC-like)</div>
-                                    <div class="data-value">${receivedCryptogram}</div>
-                                </div>
-                                <div class="data-row">
-                                    <div class="data-label">Contador (ATC)</div>
-                                    <div class="data-value">${data.counter} → ${parseInt(data.counter) + 1}</div>
-                                </div>
-                                <div class="security-info">
-                                    <h4>🔐 Seguridad Verificada:</h4>
-                                    <ul>
-                                        <li>✅ Challenge-Response validado</li>
-                                        <li>✅ Cryptogram correcto (HMAC-SHA256)</li>
-                                        <li>✅ Contador incrementado</li>
-                                        <li>✅ Autenticación completada</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        document.getElementById('output-validate').innerHTML = `
-                            <div class="status error">❌ Cryptogram Inválido</div>
-                            <p>Posible intento de clonación detectado</p>
-                        `;
-                    }
-                } else {
-                    document.getElementById('output-validate').innerHTML = `
-                        <div class="status error">❌ Usuario no registrado</div>
-                    `;
-                }
-            } catch (error) {
-                document.getElementById('output-validate').innerHTML = `
-                    <div class="status error">❌ Error: ${error.message}</div>
-                `;
-            }
-        }
+    const data = await resp.json();
 
-        async function incrementCounter(token, currentCounter) {
-            const newCounter = parseInt(currentCounter) + 1;
-            await fetch(sheetUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    action: 'incrementCounter',
-                    token: token,
-                    counter: newCounter.toString()
-                })
-            });
-        }
+    if (!data.success) {
+      showStatus('error', '❌ Usuario o contraseña incorrectos.');
+      btn.disabled = false;
+      btn.textContent = 'Iniciar sesión';
+      return;
+    }
 
-        // ========== USUARIOS ==========
-        window.loadAllUsers = async function() {
-            if (!isConnected) {
-                alert('❌ Conecta Google Sheet primero');
-                return;
-            }
+    state.loggedIn = true;
+    state.user = data.user;
+    saveSession(data.user);
 
-            document.getElementById('users-list').innerHTML = `
-                <div class="status loading">📊 Cargando...</div>
-            `;
+    showStatus('success', `✅ Bienvenido, ${data.user}. Token NFC válido.`);
+    document.getElementById('login-form').classList.add('hidden');
+    document.getElementById('session-info').textContent = `Sesión activa: ${data.user}`;
+    document.getElementById('check-form').classList.remove('hidden');
 
-            try {
-                const response = await fetch(sheetUrl + '?action=list');
-                const data = await response.json();
+  } catch (err) {
+    showStatus('error', '❌ Error de conexión.');
+    btn.disabled = false;
+    btn.textContent = 'Iniciar sesión';
+  }
+}
 
-                if (data.records && data.records.length > 0) {
-                    let html = `
-                        <div class="status success">👥 ${data.records.length} Usuarios</div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Nombre</th>
-                                    <th>Token</th>
-                                    <th>Contador</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
+// ─────────────────────────────────────────────────────────────
+// CHEQUEAR TAREA
+// ─────────────────────────────────────────────────────────────
 
-                    data.records.forEach(user => {
-                        html += `
-                            <tr>
-                                <td><strong>${user.name}</strong></td>
-                                <td style="font-family: monospace; font-size: 10px;">${user.token.substring(0, 12)}...</td>
-                                <td style="text-align: center;">${user.counter}</td>
-                                <td>
-                                    <button class="btn-small" onclick='regeneratePass(${JSON.stringify(user)})'>
-                                        🔄 Regenerar Pase
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    });
+async function checkTask() {
+  if (!state.tokenValid || !state.loggedIn) return;
 
-                    html += `</tbody></table>`;
-                    document.getElementById('users-list').innerHTML = html;
-                } else {
-                    document.getElementById('users-list').innerHTML = `
-                        <div class="status waiting">📋 Sin usuarios</div>
-                    `;
-                }
-            } catch (error) {
-                document.getElementById('users-list').innerHTML = `
-                    <div class="status error">❌ Error: ${error.message}</div>
-                `;
-            }
-        };
+  // Verificar que no ha pasado demasiado tiempo desde el escaneo
+  const elapsed = (Date.now() - state.scanTimestamp) / 1000;
+  if (elapsed > CONFIG.PRESENCE_WINDOW_SECONDS) {
+    showStatus('error', '❌ La ventana de presencia ha expirado. Escanea la tarjeta de nuevo.');
+    document.getElementById('check-form').classList.add('hidden');
+    return;
+  }
 
-        window.regeneratePass = function(user) {
-            switchTab('register');
-            generateWalletPass(user.token, user.name, user.secret_key);
-        };
+  const btn = document.getElementById('check-btn');
+  btn.disabled = true;
+  btn.textContent = 'Registrando...';
 
-        // ========== CRYPTOGRAPHIC FUNCTIONS ==========
-        
-        // Generar token SHA-256
-        async function generateToken(data) {
-            const encoder = new TextEncoder();
-            const dataBuffer = encoder.encode(data);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
+  try {
+    const resp = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action:    'check_task',
+        uid:       state.uid,
+        cnt:       state.cnt,
+        mac:       state.mac,
+        task:      state.task,
+        user:      state.user,
+        timestamp: new Date().toISOString(),
+      })
+    });
 
-        // Generar secret key
-        async function generateSecretKey(cardId, token) {
-            const combined = cardId + token + Date.now();
-            return await generateToken(combined);
-        }
+    const data = await resp.json();
 
-        // Generar challenge aleatorio
-        async function generateChallenge() {
-            const array = new Uint8Array(16);
-            crypto.getRandomValues(array);
-            return Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
-        }
+    if (!data.success) {
+      showStatus('error', `❌ ${data.reason || 'Error al registrar el check.'}`);
+      btn.disabled = false;
+      btn.textContent = '✅ Chequear tarea';
+      return;
+    }
 
-        // Generar cryptogram (EMV-style con HMAC-SHA256)
-        async function generateCryptogram(secretKey, challenge, counter) {
-            const message = `${challenge}:${counter}`;
-            const key = await crypto.subtle.importKey(
-                'raw',
-                new TextEncoder().encode(secretKey),
-                { name: 'HMAC', hash: 'SHA-256' },
-                false,
-                ['sign']
-            );
-            
-            const signature = await crypto.subtle.sign(
-                'HMAC',
-                key,
-                new TextEncoder().encode(message)
-            );
-            
-            const hashArray = Array.from(new Uint8Array(signature));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-    </script>
+    showStatus('success', '✅ Tarea chequeada correctamente. Redirigiendo...');
+
+    // Redirigir a la URL de la tarea en el ERP
+    setTimeout(() => {
+      if (state.redirectUrl) {
+        window.location.href = state.redirectUrl;
+      }
+    }, 1500);
+
+  } catch (err) {
+    showStatus('error', '❌ Error de conexión.');
+    btn.disabled = false;
+    btn.textContent = '✅ Chequear tarea';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// SESIÓN LOCAL (sessionStorage = se borra al cerrar el navegador)
+// ─────────────────────────────────────────────────────────────
+
+function saveSession(user) {
+  sessionStorage.setItem('checktask_user', user);
+  sessionStorage.setItem('checktask_ts', Date.now().toString());
+}
+
+function getSession() {
+  const user = sessionStorage.getItem('checktask_user');
+  const ts   = parseInt(sessionStorage.getItem('checktask_ts') || '0');
+  if (!user) return null;
+  // Sesión válida por 8 horas
+  if (Date.now() - ts > 8 * 3600 * 1000) {
+    sessionStorage.clear();
+    return null;
+  }
+  return { user };
+}
+
+// ─────────────────────────────────────────────────────────────
+// UTILIDADES UI
+// ─────────────────────────────────────────────────────────────
+
+function showStatus(type, text) {
+  const box  = document.getElementById('status-box');
+  const span = document.getElementById('status-text');
+
+  box.className = `status-box ${type}`;
+
+  const spinner = type === 'checking'
+    ? '<div class="spinner"></div>'
+    : `<span class="status-icon">${type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️'}</span>`;
+
+  box.innerHTML = `${spinner}<span>${text}</span>`;
+}
+
+function startCountdown() {
+  const el = document.getElementById('countdown');
+  const updateCountdown = () => {
+    const elapsed  = (Date.now() - state.scanTimestamp) / 1000;
+    const remaining = Math.max(0, CONFIG.PRESENCE_WINDOW_SECONDS - elapsed);
+    if (remaining <= 0) {
+      el.textContent = '⚠️ Ventana de presencia expirada';
+      document.getElementById('check-btn').disabled = true;
+    } else {
+      const min = Math.floor(remaining / 60);
+      const sec = Math.floor(remaining % 60);
+      el.textContent = `⏱️ Tiempo restante: ${min}:${sec.toString().padStart(2,'0')}`;
+    }
+  };
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+}
+</script>
+
 </body>
 </html>
