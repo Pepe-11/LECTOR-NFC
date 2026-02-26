@@ -30,40 +30,39 @@
         const scriptUrl = "https://script.google.com/macros/s/AKfycby4Xkkw7ZYZAIyEkY8qUKQITiXC8to1eAOU1OWYpbvJhVuCGkMXjgYf5AFPjDHQvvjDxg/exec";
         
         const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('t');
+        const token = urlParams.get('sdm');
 
         // 1. Verificación automática
-        if (!token) {
-            document.getElementById("msg").innerText = "Error: Falta token en la tarjeta.";
-        } else {
-            fetch(`${scriptUrl}?t=${token}`)
-                .then(r => r.text())
-                .then(res => {
-                    if (res === "VALIDO") {
-                        document.getElementById("msg").innerText = "Redirigiendo...";
-                        window.location.href = urlDestino; // Redirige a la URL que pusiste arriba
-                    } else {
-                        document.getElementById("msg").innerText = "Inicie sesión para continuar:";
-                        document.getElementById("loginForm").style.display = "block";
-                    }
-                });
-        }
+       if (sdmToken) {
+    // Verificar si este código específico es válido
+    fetch(`${scriptUrl}?sdm=${sdmToken}`)
+        .then(r => r.text())
+        .then(res => {
+            if (res === "VALIDO") {
+                window.location.href = urlDestino;
+            } else if (res === "EXPIRADO" || res === "INVALIDO") {
+                document.getElementById("msg").innerText = "Este enlace ya ha sido usado o ha expirado.";
+                document.getElementById("loginForm").style.display = "block";
+            }
+        });
+}
 
-        // 2. Función de Login
-        function doLogin() {
-            const u = document.getElementById("user").value;
-            const p = document.getElementById("pass").value;
-
-            fetch(`${scriptUrl}?action=login&t=${token}&u=${u}&p=${p}`)
-                .then(r => r.text())
-                .then(res => {
-                    if (res === "LOGIN_OK") {
-                        window.location.href = urlDestino; // Redirige tras login exitoso
-                    } else {
-                        alert("Usuario o contraseña incorrectos.");
-                    }
-                });
-        }
+function doLogin() {
+    const u = document.getElementById("user").value;
+    const p = document.getElementById("pass").value;
+    
+    fetch(`${scriptUrl}?action=login&sdm=${sdmToken}&u=${u}&p=${p}`)
+        .then(r => r.text())
+        .then(res => {
+            if (res === "LOGIN_OK") {
+                location.reload(); 
+            } else if (res === "ERROR: CODIGO_YA_USADO") {
+                alert("Esta lectura de tarjeta ya caducó. Escanea de nuevo.");
+            } else {
+                alert("Credenciales incorrectas");
+            }
+        });
+}
     </script>
 </body>
 </html>
